@@ -1,0 +1,299 @@
+swagger: '2.0'
+
+info:
+  title: TODO API
+  version: '0.1'
+  description: TODO
+
+externalDocs:
+  description: STUPS documentation
+  url: http://stups.readthedocs.org/
+
+basePath: /
+produces:
+- application/json
+consumes:
+- application/json
+
+paths:
+
+  '/resource-types':
+    get:
+      summary: List resource types
+      description: |
+        Provides a list of all resource types.
+      tags:
+        - ResourceType
+      operationId: undefined
+      responses:
+        200:
+          description: List of resource types
+          schema:
+            description: All resource types
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+              required:
+                - id
+                - name
+          examples:
+            application/json:
+              - id: sales_order
+                name: Sales Order
+        default:
+          $ref: '#/responses/Error'
+
+  '/resource-types/{resource_type_id}':
+    get:
+      summary: Read resource type
+      description: |
+        Returns detailed information about a resource type.
+      tags:
+        - ResourceType
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+      responses:
+        200:
+          description: Resource type details
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              resource_owners:
+                type: array
+                items:
+                  type: string
+            required:
+              - id
+              - name
+        404:
+          description: Resource type not found
+        default:
+          $ref: '#/responses/Error'
+
+    put:
+      summary: Save resource type
+      description: |
+        Creates or updates a resource type.
+        If there is any resource-owner-scope ("is_resource_owner_scope" = true),
+        belonging to this resource type, the "resource_owners" list MUST NOT
+        be empty.
+      tags:
+        - ResourceType
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+        - name: resource_type
+          in: body
+          description: |
+            Details about the resource type
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              resource_owners:
+                type: array
+                items:
+                  type: string
+            required:
+              - name
+      responses:
+        200:
+          description: Resource type stored
+        default:
+          $ref: '#/responses/Error'
+
+    delete:
+      summary: Delete resource type
+      description: |
+        Deletes a resource type.
+      tags:
+        - ResourceType
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+      responses:
+        200:
+          description: Resource type deleted
+        default:
+          $ref: '#/responses/Error'
+
+  '/resource-types/{resource_type_id}/scopes':
+    get:
+      summary: List scopes
+      description: |
+        List of all OAuth2.0 scopes belonging to the requested resouce type.
+      tags:
+        - Scope
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+      responses:
+        200:
+          description: List of scopes
+          schema:
+            description: Scopes
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                summary:
+                  type: string
+                description:
+                  type: string
+                user_information:
+                  type: string
+                criticality_level:
+                  type: integer
+                  format: int32
+                is_resource_owner_scope:
+                  type: boolean
+              required:
+                - id
+                - summary
+                - criticality_level
+                - is_resource_owner_scope
+
+  '/resource-types/{resource_type_id}/scopes/{scope_id}':
+    get:
+      summary: Read scope
+      description: |
+        Read details of one scope
+      tags:
+        - Scope
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+        - $ref: '#/parameters/ScopeID'
+      responses:
+        200:
+          description: Detailed information about a scope
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              summary:
+                type: string
+              description:
+                type: string
+              user_information:
+                type: string
+              criticality_level:
+                type: integer
+                format: int32
+              is_resource_owner_scope:
+                type: boolean
+            required:
+              - id
+              - summary
+              - criticality_level
+              - is_resource_owner_scope
+        404:
+          description: Scope not found
+        default:
+          $ref: '#/responses/Error'
+
+    put:
+      summary: Save scope
+      description: |
+        Creates or updates an OAuth2.0 scope for a certain resource type.
+        A resource-owner-scope ("is_resource_owner_scope" = true)
+        requires the resource type to have AT LEAST ONE "resource_owner".
+      tags:
+        - Scope
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+        - $ref: '#/parameters/ScopeID'
+        - name: scope
+          in: body
+          schema:
+            type: object
+            properties:
+              summary:
+                type: string
+              description:
+                type: string
+              user_information:
+                type: string
+              criticality_level:
+                type: integer
+                format: int32
+              is_resource_owner_scope:
+                type: boolean
+            required:
+              - summary
+              - criticality_level
+              - is_resource_owner_scope
+
+      responses:
+        200:
+          description: Scope stored
+        404:
+          description: Resource type not found
+        default:
+          $ref: '#/responses/Error'
+
+    delete:
+      summary: Delete scope
+      description: |
+        Removes an OAuth2.0 scope from a certain resource type
+      tags:
+        - Scope
+      operationId: undefined
+      parameters:
+        - $ref: '#/parameters/ResourceTypeID'
+        - $ref: '#/parameters/ScopeID'
+      responses:
+        200:
+          description: Scope stored
+        404:
+          description: Resource type was not found
+        default:
+          $ref: '#/responses/Error'
+
+parameters:
+  ResourceTypeID:
+    name: resource_type_id
+    in: path
+    type: string
+    description: ID of the resource type
+    required: true
+  ScopeID:
+    name: scope_id
+    in: path
+    type: string
+    description: "ID of the OAuth2.0 scope"
+    required: true
+
+responses:
+  Error:
+    description: An error occured.
+    schema:
+      $ref: '#/definitions/Error'
+
+definitions:
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+    example:
+      message: Internal Server Error
