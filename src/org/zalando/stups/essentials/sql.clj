@@ -23,7 +23,23 @@
    :db-subprotocol "postgresql"
    :db-subname     "//localhost:5432/essentials"
    :db-user        "postgres"
-   :db-password    "postgres"})
+   :db-password    "postgres"
+   :db-init-sql    "SET search_path TO ze_data, public"})
 
 (defqueries "db/essentials.sql")
+
+(defn strip-prefix
+  "Strip the database table prefix from the given key"
+  [key]
+  (-> key
+      name
+      (.split "_")
+      rest
+      (#(clojure.string/join "_" %))
+      keyword))
+
+(defn from-sql
+  "Transform a database result row to a valid result object: strip table prefix from column names"
+  [row]
+  (zipmap (map strip-prefix (keys row)) (vals row)))
 
