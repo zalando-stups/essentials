@@ -29,7 +29,7 @@ paths:
         Provides a list of all resource types.
       tags:
         - ResourceType
-      operationId: "org.zalando.stups.essentials.api/list-resource-types"
+      operationId: "org.zalando.stups.essentials.api/read-resource-types"
       responses:
         200:
           description: List of resource types
@@ -142,7 +142,7 @@ paths:
         List of all OAuth2.0 scopes belonging to the requested resouce type.
       tags:
         - Scope
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/read-scopes"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
@@ -202,7 +202,7 @@ paths:
         Read details of one scope
       tags:
         - Scope
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/read-scope"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'
@@ -265,7 +265,7 @@ paths:
         requires the resource type to have AT LEAST ONE "resource_owner".
       tags:
         - Scope
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/create-or-update-scope"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'
@@ -288,7 +288,7 @@ paths:
         Removes an OAuth2.0 scope from a certain resource type
       tags:
         - Scope
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/delete-scope"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'

@@ -41,21 +41,21 @@
   "Provides a list of all resource types"
   [_ _ db]
   (log/debug "Read all resource types...")
-  (-> (sql/read-resource-types {} {:connection db})
-      (map #(strip-prefix %))
-      (response)
-      (content-type-json)))
+  (->> (sql/read-resource-types {} {:connection db})
+       (map strip-prefix)
+       (response)
+       (content-type-json)))
 
 (defn read-resource-type
   "Reads detailed information about ine resource type from database"
   [{:keys [resource_type_id]} _ db]
   (log/debug "Read resource type '%s'..." resource_type_id)
-  (-> (sql/read-resource-type {:resource_type_id resource_type_id}
-                              {:connection db})
-      (map #(strip-prefix %))
-      (map #(assoc % :resource_owners (str/split (:resource_owners %) #",")))
-      (single-response)
-      (content-type-json)))
+  (->> (sql/read-resource-type {:resource_type_id resource_type_id}
+                               {:connection db})
+       (map strip-prefix)
+       (map #(update-in % [:resource_owners] str/split #","))
+       (single-response)
+       (content-type-json)))
 
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
@@ -66,7 +66,7 @@
      :name             (:name resource_type)
      :description      (:description resource_type)
      :resource_owners  (str/join "," (:resource_owners resource_type))}
-    {db})
+    {:connection db})
   (log/info "Saved resource type '%s' with %s" resource_type_id resource_type)
   (response nil))
 
@@ -74,13 +74,61 @@
   "Deletes a resource type from the database"
   [{:keys [resource_type_id]} _ db]
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
-  (let [deleted (> (sql/delete-resource_type! {:resource_type_id resource_type_id} {:connection db})
-                   0)]
+  (let [deleted (pos? (sql/delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
     (if deleted
       (do (log/info "Deleted resource type '%s'" resource_type_id)
           (response nil))
       (not-found nil))))
 
-(defn noop []
-  (response nil))
+(defn read-scopes
+  "Reads the scopes of one resource type from database"
+  [{:keys [resource_type_id]} _ db]
+  (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
+  (->> (sql/read-scopes {:resource_type_id resource_type_id} {:connection db})
+       (map strip-prefix)
+       (response)
+       (content-type-json)))
 
+(defn read-scope
+  "Read one scope from database"
+  [{:keys [resource_type_id scope_id]} _ db]
+  (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
+  (->> (sql/read-scope {:resource_type_id resource_type_id
+                        :scope_id         scope_id} {:connection db})
+       (map strip-prefix)
+       (single-response)
+       (content-type-json)))
+
+(defn- resource-type-exists?
+  [resource_type_id db]
+  (first (sql/read-resource-type {:resource_type_id resource_type_id}
+                                 {:connection db})))
+
+(defn create-or-update-scope
+  "Creates or updates a scope"
+  [{:keys [resource_type_id scope_id scope]} _ db]
+  (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
+  (if (resource-type-exists? resource_type_id db)
+    (do (sql/create-or-update-scope!
+          {:resource_type_id        resource_type_id
+           :scope_id                scope_id
+           :summary                 (:summary scope)
+           :description             (:description scope)
+           :user_information        (:user_information scope)
+           :criticality_level       (:criticality_level scope)
+           :is_resource_owner_scope (:is_resource_owner_scope scope)}
+          {:connection db})
+        (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
+        (response nil))
+    (not-found nil)))
+
+(defn delete-scope
+  "Deletes a scope"
+  [{:keys [resource_type_id scope_id]} _ db]
+  (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
+  (if (resource-type-exists? resource_type_id db)
+    (do (sql/delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
+                           {:connection db})
+        (log/info "Deleted scope '%s' of resource type '%s'" scope_id resource_type_id)
+        (response nil))
+    (not-found nil)))
