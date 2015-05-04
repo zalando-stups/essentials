@@ -29,7 +29,7 @@ paths:
         Provides a list of all resource types.
       tags:
         - ResourceType
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/list-resource-types"
       responses:
         200:
           description: List of resource types
@@ -59,7 +59,7 @@ paths:
         Returns detailed information about a resource type.
       tags:
         - ResourceType
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/read-resource-type"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
@@ -105,7 +105,7 @@ paths:
         be empty.
       tags:
         - ResourceType
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/create-or-update-resource-type"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - name: resource_type
@@ -126,7 +126,7 @@ paths:
         Deletes a resource type.
       tags:
         - ResourceType
-      operationId: "org.zalando.stups.essentials.api/noop"
+      operationId: "org.zalando.stups.essentials.api/delete-resource-type"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
