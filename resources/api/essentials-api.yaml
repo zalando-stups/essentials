@@ -17,6 +17,9 @@ produces:
 consumes:
 - application/json
 
+security:
+  - oauth2: [uid]
+
 paths:
 
   '/resource-types':
@@ -26,7 +29,7 @@ paths:
         Provides a list of all resource types.
       tags:
         - ResourceType
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       responses:
         200:
           description: List of resource types
@@ -56,7 +59,7 @@ paths:
         Returns detailed information about a resource type.
       tags:
         - ResourceType
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
@@ -102,7 +105,7 @@ paths:
         be empty.
       tags:
         - ResourceType
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - name: resource_type
@@ -110,25 +113,7 @@ paths:
           description: |
             Details about the resource type
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Human-readable name
-                example: Sales Order
-              description:
-                type: string
-                description: |
-                  An elaborate description with examples of
-                  what kind of data this resource type includes
-              resource_owners:
-                type: array
-                items:
-                  type: string
-                  description: |
-                    Who owns the resource? Who can grant access to the resource?
-            required:
-              - name
+            $ref: '#/definitions/StoreResourceType'
       responses:
         200:
           description: Resource type stored
@@ -141,7 +126,7 @@ paths:
         Deletes a resource type.
       tags:
         - ResourceType
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
@@ -157,7 +142,7 @@ paths:
         List of all OAuth2.0 scopes belonging to the requested resouce type.
       tags:
         - Scope
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
       responses:
@@ -217,7 +202,7 @@ paths:
         Read details of one scope
       tags:
         - Scope
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'
@@ -280,52 +265,14 @@ paths:
         requires the resource type to have AT LEAST ONE "resource_owner".
       tags:
         - Scope
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'
         - name: scope
           in: body
           schema:
-            type: object
-            properties:
-              summary:
-                type: string
-                description: A few words on what the scope grants
-                example: Grants read-access to the sales orders of a customer
-              description:
-                type: string
-                description: An elaborate description
-              user_information:
-                type: string
-                description: |
-                  This will be shown to the user on the consent screen. “The application would like to…”
-                example: Read your Zalando orders
-              criticality_level:
-                type: integer
-                format: int32
-                minimum: 1
-                maximum: 4
-                description: |
-                  How sensitive is the data you get access to?
-                  1: 'Not critical';
-                  2: 'Personal Information';
-                  3: 'Financial information';
-                  4: 'Secret information';
-                example: 3
-              is_resource_owner_scope:
-                type: boolean
-                description: |
-                  A Resource Owner Scope can be granted by the resource owners to others.
-                  The resource owner automatically has the permission to grant this scope
-                  without further actions. Resource Owner Scopes always authorize only in
-                  the context of the resource owner’s resources. For instance: A customer
-                  can grant an application read access to his sales order data.
-                example: true
-            required:
-              - summary
-              - criticality_level
-              - is_resource_owner_scope
+            $ref: '#/definitions/StoreScope'
 
       responses:
         200:
@@ -341,7 +288,7 @@ paths:
         Removes an OAuth2.0 scope from a certain resource type
       tags:
         - Scope
-      operationId: undefined
+      operationId: "org.zalando.stups.essentials.api/noop"
       parameters:
         - $ref: '#/parameters/ResourceTypeID'
         - $ref: '#/parameters/ScopeID'
@@ -384,3 +331,78 @@ definitions:
         type: string
     example:
       message: Internal Server Error
+
+  StoreResourceType:
+    type: object
+    properties:
+      name:
+         type: string
+         description: Human-readable name
+         example: Sales Order
+      description:
+         type: string
+         description: |
+           An elaborate description with examples of
+           what kind of data this resource type includes
+         example: |
+           Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      resource_owners:
+         type: array
+         items:
+           type: string
+           description: |
+             Who owns the resource? Who can grant access to the resource?
+           example: customer
+    required:
+      - name
+
+  StoreScope:
+    type: object
+    properties:
+      summary:
+        type: string
+        description: A few words on what the scope grants
+        example: Grants read-access to the sales orders of a customer
+      description:
+        type: string
+        description: An elaborate description
+        example: |
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      user_information:
+        type: string
+        description: |
+          This will be shown to the user on the consent screen. “The application would like to…”
+        example: Read your Zalando orders
+      criticality_level:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 4
+        description: |
+          How sensitive is the data you get access to?
+          1: 'Not critical';
+          2: 'Personal Information';
+          3: 'Financial information';
+          4: 'Secret information';
+        example: 3
+      is_resource_owner_scope:
+        type: boolean
+        description: |
+          A Resource Owner Scope can be granted by the resource owners to others.
+          The resource owner automatically has the permission to grant this scope
+          without further actions. Resource Owner Scopes always authorize only in
+          the context of the resource owner’s resources. For instance: A customer
+          can grant an application read access to his sales order data.
+        example: true
+    required:
+      - summary
+      - criticality_level
+      - is_resource_owner_scope
+
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: https://example.com/oauth2/dialog
+    scopes:
+      uid: Unique identifier of the user accessing the service.

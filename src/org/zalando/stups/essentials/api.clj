@@ -27,6 +27,9 @@
 (def default-http-configuration
   {:http-port 8080})
 
+(defn noop []
+  (response nil))
+
 (defn- strip-prefix
   "Removes the database field prefix."
   [m]
