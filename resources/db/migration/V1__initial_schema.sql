@@ -22,3 +22,6 @@ CREATE TABLE scope (
   PRIMARY KEY (s_id, s_resource_type_id),
   FOREIGN KEY (s_resource_type_id) REFERENCES resource_type (rt_id) ON DELETE CASCADE
 );
+
+CREATE INDEX scope_resource_type_idx
+          ON scope (s_resource_type_id);

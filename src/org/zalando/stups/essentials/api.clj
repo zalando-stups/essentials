@@ -17,6 +17,7 @@
             [org.zalando.stups.friboo.ring :refer :all]
             [org.zalando.stups.friboo.log :as log]
             [org.zalando.stups.essentials.sql :as sql]
+            [io.sarnowski.swagger1st.util.api :refer [throw-error]]
             [ring.util.response :refer :all]
             [clojure.data.json :refer [JSONWriter]]
             [clojure.string :as str]))
@@ -37,6 +38,19 @@
                (fn [[k v]] [(remove-prefix k) v])
                m))))
 
+(defn- parse-resource-owners [string]
+  (filterv #(not (str/blank? %)) (str/split string #",")))
+
+(defn- resource-type-from-db [row]
+  (-> row
+      strip-prefix
+      (update-in [:resource_owners] parse-resource-owners)))
+
+(defn- load-resource-type
+  [resource_type_id db]
+  (when-first [row (sql/read-resource-type {:resource_type_id resource_type_id} {:connection db})]
+    (resource-type-from-db row)))
+
 (defn read-resource-types
   "Provides a list of all resource types"
   [_ _ db]
@@ -50,17 +64,20 @@
   "Reads detailed information about ine resource type from database"
   [{:keys [resource_type_id]} _ db]
   (log/debug "Read resource type '%s'..." resource_type_id)
-  (->> (sql/read-resource-type {:resource_type_id resource_type_id}
-                               {:connection db})
-       (map strip-prefix)
-       (map #(update-in % [:resource_owners] str/split #","))
-       (single-response)
-       (content-type-json)))
+  (if-let [resource-type (load-resource-type resource_type_id db)]
+    (content-type-json (response resource-type))
+    (not-found {})))
 
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
   [{:keys [resource_type_id resource_type]} _ db]
   (log/debug "Saving resource type '%s'..." resource_type_id)
+  (when (and (empty? (:resource_owners resource_type))
+             (some :s_is_resource_owner_scope (sql/read-scopes {:resource_type_id resource_type_id} {:connection db})))
+    (throw-error
+      400
+      "Cannot remove resource owners from resource type, because it already contains resource-owner-scopes"
+      (format "Resource type: '%s'" resource_type_id)))
   (sql/create-or-update-resource-type!
     {:resource_type_id resource_type_id
      :name             (:name resource_type)
@@ -99,17 +116,19 @@
        (single-response)
        (content-type-json)))
 
-(defn- resource-type-exists?
-  [resource_type_id db]
-  (first (sql/read-resource-type {:resource_type_id resource_type_id}
-                                 {:connection db})))
-
 (defn create-or-update-scope
   "Creates or updates a scope"
   [{:keys [resource_type_id scope_id scope]} _ db]
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
-  (if (resource-type-exists? resource_type_id db)
-    (do (sql/create-or-update-scope!
+  (if-let [resource-type (load-resource-type resource_type_id db)]
+    (do (when (and (:is_resource_owner_scope scope)
+                   (empty? (:resource_owners resource-type)))
+          (throw-error
+            400
+            "A resource-owner-scope requires its resource type to have at least one resource owner"
+            (format "Resource type: '%s'" resource_type_id)
+            (format "Scope: '%s'" scope_id)))
+        (sql/create-or-update-scope!
           {:resource_type_id        resource_type_id
            :scope_id                scope_id
            :summary                 (:summary scope)
@@ -120,15 +139,17 @@
           {:connection db})
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
         (response nil))
-    (not-found nil)))
+    (do (log/debug "Resource type '%s' not found" resource_type_id)
+        (not-found nil))))
 
 (defn delete-scope
   "Deletes a scope"
   [{:keys [resource_type_id scope_id]} _ db]
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
-  (if (resource-type-exists? resource_type_id db)
+  (if (load-resource-type resource_type_id db)
     (do (sql/delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
                            {:connection db})
         (log/info "Deleted scope '%s' of resource type '%s'" scope_id resource_type_id)
         (response nil))
-    (not-found nil)))
+    (do (log/debug "Resource type '%s' not found" resource_type_id)
+        (not-found nil))))
