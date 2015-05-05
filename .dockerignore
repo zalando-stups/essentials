@@ -1,0 +1,14 @@
+.idea
+**/*.iml
+dev
+resources
+src
+target/classes
+target/stale
+target/essentials*SNAPSHOT.jar
+.gitignore
+.nrepl-port
+LICENSE
+pom.xml
+project.clj
+README.md
