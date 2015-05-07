@@ -69,12 +69,14 @@
   "Creates or updates a resource type"
   [{:keys [resource_type_id resource_type]} _ db]
   (log/debug "Saving resource type '%s'..." resource_type_id)
-  (when (and (empty? (:resource_owners resource_type))
-             (some :s_is_resource_owner_scope (sql/read-scopes {:resource_type_id resource_type_id} {:connection db})))
-    (throw-error
-      400
-      "Cannot remove resource owners from resource type, because it already contains resource-owner-scopes"
-      (format "Resource type: '%s'" resource_type_id)))
+  (when (empty? (:resource_owners resource_type))
+    (let [resource-owner-scopes (filterv :s_is_resource_owner_scope
+                                         (sql/read-scopes {:resource_type_id resource_type_id} {:connection db}))]
+      (when-not (empty? resource-owner-scopes)
+        (throw-error
+          400
+          "Cannot remove resource owners from resource type, because it already contains resource-owner-scopes"
+          {:resource_type_id resource_type_id :affected_scope_ids (map :s_id resource-owner-scopes)}))))
   (sql/create-or-update-resource-type!
     {:resource_type_id resource_type_id
      :name             (:name resource_type)
@@ -123,8 +125,7 @@
           (throw-error
             400
             "A resource-owner-scope requires its resource type to have at least one resource owner"
-            (format "Resource type: '%s'" resource_type_id)
-            (format "Scope: '%s'" scope_id)))
+            {:resource_type_id resource_type_id :scope_id scope_id}))
         (sql/create-or-update-scope!
           {:resource_type_id        resource_type_id
            :scope_id                scope_id
