@@ -40,7 +40,6 @@ SELECT s_id,
        s_summary,
        s_description,
        s_user_information,
-       s_criticality_level,
        s_is_resource_owner_scope
   FROM ze_data.scope
  WHERE s_resource_type_id = :resource_type_id
@@ -51,7 +50,6 @@ SELECT s_id,
        s_summary,
        s_description,
        s_user_information,
-       s_criticality_level,
        s_is_resource_owner_scope
   FROM ze_data.scope
  WHERE s_resource_type_id = :resource_type_id
@@ -63,7 +61,6 @@ WITH scope_update AS (
         SET s_summary = :summary,
             s_description = :description,
             s_user_information = :user_information,
-            s_criticality_level = :criticality_level,
             s_is_resource_owner_scope = :is_resource_owner_scope
       WHERE s_resource_type_id = :resource_type_id
         AND s_id = :scope_id
@@ -73,14 +70,12 @@ INSERT INTO ze_data.scope (
             s_id,
             s_resource_type_id,
             s_summary,
-            s_criticality_level,
             s_is_resource_owner_scope,
             s_description,
             s_user_information)
      SELECT :scope_id,
             :resource_type_id,
             :summary,
-            :criticality_level,
             :is_resource_owner_scope,
             :description,
             :user_information

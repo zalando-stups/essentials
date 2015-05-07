@@ -14,7 +14,6 @@ CREATE TABLE scope (
   s_id                      TEXT     NOT NULL,
   s_resource_type_id        TEXT     NOT NULL,
   s_summary                 TEXT     NOT NULL,
-  s_criticality_level       SMALLINT NOT NULL,
   s_is_resource_owner_scope BOOLEAN  NOT NULL,
   s_description             TEXT,
   s_user_information        TEXT,

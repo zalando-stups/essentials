@@ -41,15 +41,12 @@
 (defn- parse-resource-owners [string]
   (filterv #(not (str/blank? %)) (str/split string #",")))
 
-(defn- resource-type-from-db [row]
-  (-> row
-      strip-prefix
-      (update-in [:resource_owners] parse-resource-owners)))
-
 (defn- load-resource-type
   [resource_type_id db]
   (when-first [row (sql/read-resource-type {:resource_type_id resource_type_id} {:connection db})]
-    (resource-type-from-db row)))
+    (-> row
+        strip-prefix
+        (update-in [:resource_owners] parse-resource-owners))))
 
 (defn read-resource-types
   "Provides a list of all resource types"
@@ -134,7 +131,6 @@
            :summary                 (:summary scope)
            :description             (:description scope)
            :user_information        (:user_information scope)
-           :criticality_level       (:criticality_level scope)
            :is_resource_owner_scope (:is_resource_owner_scope scope)}
           {:connection db})
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)

@@ -170,16 +170,6 @@ paths:
                   description: |
                     This will be shown to the user on the consent screen. “The application would like to…”
                   example: Read your Zalando orders
-                criticality_level:
-                  type: integer
-                  format: int32
-                  description: |
-                    How sensitive is the data you get access to?
-                    1: 'Not critical';
-                    2: 'Personal Information';
-                    3: 'Financial information';
-                    4: 'Secret information';
-                  example: 3
                 is_resource_owner_scope:
                   type: boolean
                   description: |
@@ -192,7 +182,6 @@ paths:
               required:
                 - id
                 - summary
-                - criticality_level
                 - is_resource_owner_scope
 
   '/resource-types/{resource_type_id}/scopes/{scope_id}':
@@ -228,16 +217,6 @@ paths:
                 description: |
                   This will be shown to the user on the consent screen. “The application would like to…”
                 example: Read your Zalando orders
-              criticality_level:
-                type: integer
-                format: int32
-                description: |
-                  "How sensitive is the data you get access to?
-                  1: 'Not critical';
-                  2: 'Personal Information';
-                  3: 'Financial information';
-                  4: 'Secret information';"
-                example: 3
               is_resource_owner_scope:
                 type: boolean
                 description: |
@@ -250,7 +229,6 @@ paths:
             required:
               - id
               - summary
-              - criticality_level
               - is_resource_owner_scope
         404:
           description: Scope not found
@@ -373,18 +351,6 @@ definitions:
         description: |
           This will be shown to the user on the consent screen. “The application would like to…”
         example: Read your Zalando orders
-      criticality_level:
-        type: integer
-        format: int32
-        minimum: 1
-        maximum: 4
-        description: |
-          How sensitive is the data you get access to?
-          1: 'Not critical';
-          2: 'Personal Information';
-          3: 'Financial information';
-          4: 'Secret information';
-        example: 3
       is_resource_owner_scope:
         type: boolean
         description: |
@@ -396,7 +362,6 @@ definitions:
         example: true
     required:
       - summary
-      - criticality_level
       - is_resource_owner_scope
 
 securityDefinitions:
