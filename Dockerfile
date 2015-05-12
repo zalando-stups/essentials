@@ -5,3 +5,5 @@ MAINTAINER Zalando SE
 COPY target/essentials.jar /
 
 CMD java $(java-dynamic-memory-opts) -jar /essentials.jar
+
+ADD /scm-source.json /scm-source.json
