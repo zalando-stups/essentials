@@ -329,8 +329,9 @@ definitions:
          items:
            type: string
            description: |
-             Who owns the resource? Who can grant access to the resource?
-           example: customer
+             Who owns the resource? Who can grant access to the resource? Must be a valid realm.
+           example: customers
+         uniqueItems: true
     required:
       - name
 
