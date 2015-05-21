@@ -17,6 +17,7 @@
             [org.zalando.stups.friboo.ring :refer :all]
             [org.zalando.stups.friboo.log :as log]
             [org.zalando.stups.friboo.user :as u]
+            [org.zalando.stups.friboo.config :refer [require-config]]
             [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.essentials.external.realms :refer [get-realms]]
             [io.sarnowski.swagger1st.util.api :refer [throw-error]]
@@ -46,7 +47,7 @@
 
 (defn- load-resource-type
   [resource_type_id db]
-  (when-first [row (sql/read-resource-type {:resource_type_id resource_type_id} {:connection db})]
+  (when-first [row (sql/cmd-read-resource-type {:resource_type_id resource_type_id} {:connection db})]
     (-> row
         strip-prefix
         (update-in [:resource_owners] parse-resource-owners))))
@@ -56,7 +57,7 @@
   [_ request db]
   (u/require-internal-user request)
   (log/debug "Read all resource types...")
-  (->> (sql/read-resource-types {} {:connection db})
+  (->> (sql/cmd-read-resource-types {} {:connection db})
        (map strip-prefix)
        (response)
        (content-type-json)))
@@ -74,17 +75,19 @@
   "Checks the given resource owner list:
    1. An empty list is only permitted, when no resource-owner-scopes exist for that resource type.
    2. The list must only contain valid (well-known) entries."
-  [resource-owners resource-type-id db]
+  [resource-owners resource-type-id db request]
   (let [resource-owners (set resource-owners)]
     (if (empty? resource-owners)
       (let [resource-owner-scopes (filterv :s_is_resource_owner_scope
-                                           (sql/read-scopes {:resource_type_id resource-type-id} {:connection db}))]
+                                           (sql/cmd-read-scopes {:resource_type_id resource-type-id} {:connection db}))]
         (when-not (empty? resource-owner-scopes)
           (throw-error
             400
             "Cannot remove resource owners from resource type, because it already contains resource-owner-scopes"
             {:resource_type_id resource-type-id :affected_scope_ids (map :s_id resource-owner-scopes)})))
-      (let [realms (get-realms)
+      (let [realms-url (require-config (:configuration request) :realms-url)
+            access-token (get (:tokeninfo request) "access_token")
+            realms (get-realms realms-url access-token)
             unknown-realms (set/difference resource-owners realms)]
         (when-not (empty? unknown-realms)
           (throw-error
@@ -96,10 +99,12 @@
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
   [{:keys [resource_type_id resource_type]} request db]
-  (u/require-any-internal-team request)
   (log/debug "Saving resource type '%s'..." resource_type_id)
-  (validate-resource-owners (:resource_owners resource_type) resource_type_id db)
-  (sql/create-or-update-resource-type!
+  (if (:tokeninfo request)
+    (do (u/require-any-internal-team request)
+        (validate-resource-owners (:resource_owners resource_type) resource_type_id db request))
+    (log/warn "Could not validate resouce type, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
+  (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
      :name             (:name resource_type)
      :description      (:description resource_type)
@@ -113,7 +118,7 @@
   [{:keys [resource_type_id]} request db]
   (u/require-any-internal-team request)
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
-  (let [deleted (pos? (sql/delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
+  (let [deleted (pos? (sql/cmd-delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
     (if deleted
       (do (log/info "Deleted resource type '%s'" resource_type_id)
           (response nil))
@@ -124,7 +129,7 @@
   [{:keys [resource_type_id]} request db]
   (u/require-internal-user request)
   (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
-  (->> (sql/read-scopes {:resource_type_id resource_type_id} {:connection db})
+  (->> (sql/cmd-read-scopes {:resource_type_id resource_type_id} {:connection db})
        (map strip-prefix)
        (response)
        (content-type-json)))
@@ -134,8 +139,8 @@
   [{:keys [resource_type_id scope_id]} request db]
   (u/require-internal-user request)
   (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
-  (->> (sql/read-scope {:resource_type_id resource_type_id
-                        :scope_id         scope_id} {:connection db})
+  (->> (sql/cmd-read-scope {:resource_type_id resource_type_id
+                            :scope_id         scope_id} {:connection db})
        (map strip-prefix)
        (single-response)
        (content-type-json)))
@@ -152,7 +157,7 @@
             400
             "A resource-owner-scope requires its resource type to have at least one resource owner"
             {:resource_type_id resource_type_id :scope_id scope_id}))
-        (sql/create-or-update-scope!
+        (sql/cmd-create-or-update-scope!
           {:resource_type_id        resource_type_id
            :scope_id                scope_id
            :summary                 (:summary scope)
@@ -171,8 +176,8 @@
   (u/require-any-internal-team request)
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if (load-resource-type resource_type_id db)
-    (do (sql/delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
-                           {:connection db})
+    (do (sql/cmd-delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
+                               {:connection db})
         (log/info "Deleted scope '%s' of resource type '%s'" scope_id resource_type_id)
         (response nil))
     (do (log/debug "Resource type '%s' not found" resource_type_id)

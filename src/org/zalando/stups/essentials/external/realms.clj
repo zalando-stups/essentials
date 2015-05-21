@@ -13,10 +13,15 @@
 ; limitations under the License.
 
 (ns org.zalando.stups.essentials.external.realms
-  (:require [clj-http.client :as client]))
+  (:require [clj-http.client :as client]
+            [com.netflix.hystrix.core :refer [defcommand]]))
 
-(defn get-realms
+(defcommand
+  get-realms
   "Returns a set of all realm names"
-  []
-  ; TODO load'em from http endpoint
-  #{"customers" "employees" "services"})
+  [realms-url access-token]
+  (-> (client/get realms-url
+                  {:oauth-token access-token
+                   :as          :json})
+      :body
+      set))

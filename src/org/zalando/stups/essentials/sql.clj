@@ -13,7 +13,7 @@
 ; limitations under the License.
 
 (ns org.zalando.stups.essentials.sql
-  (:require [yesql.core :refer [defqueries]]
+  (:require [org.zalando.stups.yesql-hystrix :refer [defquerycommands]]
             [org.zalando.stups.friboo.system.db :refer [def-db-component]]))
 
 (def-db-component DB :auto-migration? true)
@@ -26,4 +26,4 @@
    :db-password    "postgres"
    :db-init-sql    "SET search_path TO ze_data, public"})
 
-(defqueries "db/essentials.sql")
+(defquerycommands "db/essentials.sql")
