@@ -1,5 +1,7 @@
 # ESSENTIALS
 
+[![Build Status](https://travis-ci.org/zalando-stups/essentials.svg?branch=master)](https://travis-ci.org/zalando-stups/essentials)
+
 ESSENTIALS is the repository for resource types and OAuth 2.0 scopes in the STUPS ecosystem.
 
 
