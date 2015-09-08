@@ -7,8 +7,9 @@
 
             :min-lein-version "2.0.0"
 
-            :dependencies [[org.zalando.stups/friboo "0.31.0"]
-                           [yesql "0.5.0-rc3"]]
+            :dependencies [[org.clojure/clojure "1.7.0"]
+                           [org.zalando.stups/friboo "1.1.3"]
+                           [yesql "0.5.0"]]
 
             :main ^:skip-aot org.zalando.stups.essentials.core
             :uberjar-name "essentials.jar"
