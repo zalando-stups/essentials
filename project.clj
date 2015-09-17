@@ -1,4 +1,4 @@
-(defproject org.zalando.stups/essentials "0.11.0-SNAPSHOT"
+(defproject org.zalando.stups/essentials "0.11.0"
             :description "Microservice for resource types and scopes."
             :url "https://github.com/zalando-stups/essentials"
 
