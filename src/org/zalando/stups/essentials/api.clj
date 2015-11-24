@@ -22,7 +22,6 @@
             [org.zalando.stups.essentials.external.realms :refer [get-realms]]
             [io.sarnowski.swagger1st.util.api :refer [throw-error]]
             [ring.util.response :refer :all]
-            [clojure.data.json :refer [JSONWriter]]
             [clojure.string :as str]
             [clojure.set :as set]))
 
