@@ -35,9 +35,9 @@
 
 (defn start
   "Starts the system running, sets the Var #'system."
-  []
-  (alter-var-root #'system
-                  (constantly (org.zalando.stups.essentials.core/run {:system-log-level "DEBUG"}))))
+  [extra-config]
+  (alter-var-root #'system (constantly (org.zalando.stups.essentials.core/run (merge {:system-log-level "DEBUG"}
+                                                                                     extra-config)))))
 
 (defn stop
   "Stops the system if it is currently running, updates the Var
@@ -48,9 +48,11 @@
 
 (defn go
   "Initializes and starts the system running."
-  []
-  (start)
-  :ready)
+  ([extra-config]
+   (start extra-config)
+   :ready)
+  ([]
+   (go {})))
 
 (defn reset
   "Stops the system, reloads modified source files, and restarts it."
