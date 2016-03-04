@@ -19,7 +19,6 @@
             [org.zalando.stups.friboo.user :as u]
             [org.zalando.stups.friboo.config :refer [require-config]]
             [org.zalando.stups.essentials.sql :as sql]
-            [org.zalando.stups.essentials.external.realms :refer [get-realms]]
             [io.sarnowski.swagger1st.util.api :refer [throw-error]]
             [ring.util.response :refer :all]
             [clojure.string :as str]
@@ -78,6 +77,10 @@
     (content-type-json (response resource-type))
     (not-found {})))
 
+(defn- valid-resource-owners
+  [configuration]
+  (set (str/split (require-config configuration :valid-resource-owners) #",")))
+
 (defn- validate-resource-owners
   "Checks the given resource owner list:
    1. An empty list is only permitted, when no resource-owner-scopes exist for that resource type.
@@ -92,15 +95,13 @@
             400
             "Cannot remove resource owners from resource type, because it already contains resource-owner-scopes"
             {:resource_type_id resource-type-id :affected_scope_ids (map :s_id resource-owner-scopes)})))
-      (let [realms-url (require-config (:configuration request) :realms-url)
-            access-token (get (:tokeninfo request) "access_token")
-            realms (get-realms realms-url access-token)
-            unknown-realms (set/difference resource-owners realms)]
-        (when-not (empty? unknown-realms)
+      (let [valid-resource-owners   (-> request :configuration valid-resource-owners)
+            unknown-resource-owners (set/difference resource-owners valid-resource-owners)]
+        (when-not (empty? unknown-resource-owners)
           (throw-error
             400
-            (str "Resource owner list contains invalid entries: " unknown-realms)
-            {:invalid_resource_owners unknown-realms :possible_resource_owners realms})))))
+            (str "Resource owner list contains invalid entries: " unknown-resource-owners)
+            {:invalid_resource_owners unknown-resource-owners :possible_resource_owners valid-resource-owners})))))
   nil)
 
 (defn create-or-update-resource-type
@@ -109,9 +110,9 @@
   (log/debug "Saving resource type '%s'..." resource_type_id)
   (if (:tokeninfo request)
     (do (require-special-uid request)
-        (u/require-any-internal-team request)
-        (validate-resource-owners (:resource_owners resource_type) resource_type_id db request))
+        (u/require-any-internal-team request))
     (log/warn "Could not validate resouce type, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
+  (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
   (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
      :name             (:name resource_type)
