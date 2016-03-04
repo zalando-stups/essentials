@@ -7,9 +7,9 @@
 
             :min-lein-version "2.0.0"
 
-            :dependencies [[org.clojure/clojure "1.7.0"]
-                           [org.zalando.stups/friboo "1.6.0"]
-                           [yesql "0.5.1"]]
+            :dependencies [[org.clojure/clojure "1.8.0"]
+                           [org.zalando.stups/friboo "1.7.0"]
+                           [yesql "0.5.2"]]
 
             :main ^:skip-aot org.zalando.stups.essentials.core
             :uberjar-name "essentials.jar"
@@ -38,5 +38,5 @@
 
                        :dev     {:repl-options {:init-ns user}
                                  :source-paths ["dev"]
-                                 :dependencies [[org.clojure/tools.namespace "0.2.10"]
-                                                [org.clojure/java.classpath "0.2.2"]]}})
+                                 :dependencies [[org.clojure/tools.namespace "0.2.11"]
+                                                [org.clojure/java.classpath "0.2.3"]]}})
