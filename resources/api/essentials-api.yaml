@@ -293,7 +293,7 @@ parameters:
     type: string
     description: ID of the resource type
     required: true
-    pattern: "^[a-z][a-z0-9-_]*[a-z0-9]$"
+    pattern: "^[a-z][a-z0-9-_]*(?:\.[a-z0-9-_]*)?[a-z0-9]$"
 
   ScopeID:
     name: scope_id
