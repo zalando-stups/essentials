@@ -111,7 +111,7 @@
   (if (:tokeninfo request)
     (do (require-special-uid request)
         (u/require-any-internal-team request))
-    (log/warn "Could not validate resouce type, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
+    (log/warn "Could not validate user, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
   (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
@@ -158,9 +158,11 @@
 (defn create-or-update-scope
   "Creates or updates a scope"
   [{:keys [resource_type_id scope_id scope]} request db]
-  (require-special-uid request)
-  (u/require-any-internal-team request)
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
+  (if (:tokeninfo request)
+    (do (require-special-uid request)
+        (u/require-any-internal-team request))
+    (log/warn "Could not validate user, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (do (when (and (:is_resource_owner_scope scope)
                    (empty? (:resource_owners resource-type)))
