@@ -187,6 +187,12 @@ paths:
                     the context of the resource owner’s resources. For instance: A customer
                     can grant an application read access to his sales order data.
                   example: true
+                criticality_level:
+                  type: integer
+                  description:
+                    the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
+                    3 is 'critical'.
+                  example: 2
               required:
                 - id
                 - summary
@@ -234,6 +240,12 @@ paths:
                   the context of the resource owner’s resources. For instance: A customer
                   can grant an application read access to his sales order data.
                 example: true
+              ciriticality_level:
+                type: integer
+                description:
+                  the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
+                  3 is 'critical'.
+                example: 2
             required:
               - id
               - summary
@@ -369,6 +381,12 @@ definitions:
           the context of the resource owner’s resources. For instance: A customer
           can grant an application read access to his sales order data.
         example: true
+      criticality_level:
+        type: integer
+        description:
+          the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
+          3 is 'critical'.
+        example: 2
     required:
       - summary
       - is_resource_owner_scope
