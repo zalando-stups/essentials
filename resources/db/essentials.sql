@@ -84,7 +84,6 @@ INSERT INTO ze_data.scope (
             :description,
             :user_information
             :criticality_level
-
       WHERE NOT EXISTS(SELECT 1 FROM scope_update);
 
 -- name: delete-scope!
