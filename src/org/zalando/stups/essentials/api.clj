@@ -174,7 +174,8 @@
            :summary                 (:summary scope)
            :description             (:description scope)
            :user_information        (:user_information scope)
-           :is_resource_owner_scope (:is_resource_owner_scope scope)}
+           :is_resource_owner_scope (:is_resource_owner_scope scope)
+           :criticality_level       (:criticality_level scope)}
           {:connection db})
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
         (response nil))
