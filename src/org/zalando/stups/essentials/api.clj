@@ -168,15 +168,17 @@
             400
             "A resource-owner-scope requires its resource type to have at least one resource owner"
             {:resource_type_id resource_type_id :scope_id scope_id}))
+        (let [defaults {:criticality_level 2}
+              scope-keys (select-keys scope [:summary
+                                             :description
+                                             :user_information
+                                             :is_resource_owner_scope
+                                             :criticality_level])
+              scope-ids {:resource_type_id resource_type_id
+                         :scope_id         scope_id}]
         (sql/cmd-create-or-update-scope!
-          {:resource_type_id        resource_type_id
-           :scope_id                scope_id
-           :summary                 (:summary scope)
-           :description             (:description scope)
-           :user_information        (:user_information scope)
-           :is_resource_owner_scope (:is_resource_owner_scope scope)
-           :criticality_level       (:criticality_level scope)}
-          {:connection db})
+          (merge defaults scope-keys scope-ids)
+          {:connection db}))
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
         (response nil))
     (do (log/debug "Resource type '%s' not found" resource_type_id)
