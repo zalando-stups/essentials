@@ -190,8 +190,8 @@ paths:
                 criticality_level:
                   type: integer
                   description:
-                    the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
-                    3 is 'critical'.
+                    Describes a rough estimation of the sensitivity, criticality or general
+                    importance of data that is accessible via this scope.
                   example: 2
               required:
                 - id
@@ -243,8 +243,8 @@ paths:
               ciriticality_level:
                 type: integer
                 description:
-                  the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
-                  3 is 'critical'.
+                  Describes a rough estimation of the sensitivity, criticality or general
+                  importance of data that is accessible via this scope.
                 example: 2
             required:
               - id
@@ -384,8 +384,8 @@ definitions:
       criticality_level:
         type: integer
         description:
-          the degree of danger this imposted on the system, where 1 is 'mostly harmless' and
-          3 is 'critical'.
+          Describes a rough estimation of the sensitivity, criticality or general
+          importance of data that is accessible via this scope.
         example: 2
     required:
       - summary
