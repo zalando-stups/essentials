@@ -16,6 +16,7 @@
   (:require [org.zalando.stups.friboo.config :as config]
             [org.zalando.stups.friboo.system :as system]
             [org.zalando.stups.friboo.log :as log]
+            [org.zalando.stups.friboo.system.oauth2 :as oauth2]
             [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.essentials.api :as api])
   (:gen-class))
@@ -24,12 +25,14 @@
   "Initializes and starts the whole system."
   [default-configuration]
   (let [configuration (config/load-configuration
-                        (system/default-http-namespaces-and :db :essentials)
+                        (system/default-http-namespaces-and :db :essentials :oauth2)
                         [sql/default-db-configuration
                          api/default-http-configuration
                          default-configuration])
         system (system/http-system-map configuration
-                                       api/map->API [:db]
+                                       api/map->API [:db :tokens]
+                                       :tokens (oauth2/map->OAUth2TokenRefresher {:configuration (:oauth2 configuration)
+                                                                                  :tokens {:kio ["uid"]}})
                                        :db (sql/map->DB {:configuration (:db configuration)}))]
     (system/run configuration system)))
 

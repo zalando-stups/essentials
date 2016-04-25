@@ -19,6 +19,7 @@
             [org.zalando.stups.friboo.user :as u]
             [org.zalando.stups.friboo.config :refer [require-config]]
             [org.zalando.stups.essentials.sql :as sql]
+            [org.zalando.stups.essentials.external.kio :as kio]
             [io.sarnowski.swagger1st.util.api :refer [throw-error]]
             [ring.util.response :refer :all]
             [clojure.string :as str]
@@ -37,6 +38,24 @@
     (when-not (contains? uids (get tokeninfo "uid"))
       (log/warn "ACCESS DENIED (unauthorized) because not a special user.")
       (throw-error 403 "Unauthorized"))))
+
+(defn require-write-access
+  "Check whether the given resource type id starts with an application id belonging to a team of the user."
+  [id {:keys [configuration] :as request} tokens]
+  (if-let [[_ app-id] (re-find #"^([a-z][a-z\-]+[a-z])\." id)]
+    (do
+      ; ask kio
+      (if-let [{:keys [team_id]} (kio/get-app (require-config configuration :kio-url) app-id tokens)]
+        ; if kio *does* know, verify that teams match
+        (u/require-internal-team team_id request)
+        ; if kio does not know this app, fall back to special uids
+        (do
+          (log/debug "Falling back to special UIDs")
+          (require-special-uid request)))
+    ; do not proceed if what we have does not remotely look like an app id
+    (do
+      (log/warn "ACCESS DENIED could not extract application id from \"%s\"." id)
+      (throw-error 404 "Bad request")))))
 
 (defn- strip-prefix
   "Removes the database field prefix."
@@ -106,10 +125,10 @@
 
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
-  [{:keys [resource_type_id resource_type]} request db]
+  [{:keys [resource_type_id resource_type]} request db tokens]
   (log/debug "Saving resource type '%s'..." resource_type_id)
   (if (:tokeninfo request)
-    (do (require-special-uid request)
+    (do (require-write-access resource_type_id request tokens)
         (u/require-any-internal-team request))
     (log/warn "Could not validate resouce type, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
@@ -124,8 +143,8 @@
 
 (defn delete-resource-type
   "Deletes a resource type from the database"
-  [{:keys [resource_type_id]} request db]
-  (require-special-uid request)
+  [{:keys [resource_type_id]} request db tokens]
+  (require-write-access resource_type_id request tokens)
   (u/require-any-internal-team request)
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
   (let [deleted (pos? (sql/cmd-delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
@@ -157,8 +176,8 @@
 
 (defn create-or-update-scope
   "Creates or updates a scope"
-  [{:keys [resource_type_id scope_id scope]} request db]
-  (require-special-uid request)
+  [{:keys [resource_type_id scope_id scope]} request db tokens]
+  (require-write-access resource_type_id request tokens)
   (u/require-any-internal-team request)
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
@@ -183,8 +202,8 @@
 
 (defn delete-scope
   "Deletes a scope"
-  [{:keys [resource_type_id scope_id]} request db]
-  (require-special-uid request)
+  [{:keys [resource_type_id scope_id]} request db tokens]
+  (require-write-access resource_type_id request tokens)
   (u/require-any-internal-team request)
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if (load-resource-type resource_type_id db)
