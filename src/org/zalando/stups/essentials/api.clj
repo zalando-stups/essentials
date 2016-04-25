@@ -177,7 +177,7 @@
               scope-ids {:resource_type_id resource_type_id
                          :scope_id         scope_id}]
         (sql/cmd-create-or-update-scope!
-          (merge defaults scope-keys scope-ids)
+          (merge-with #(or %2 %1) defaults scope-keys scope-ids)
           {:connection db}))
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
         (response nil))
