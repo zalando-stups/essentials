@@ -61,7 +61,7 @@
 (defn read-resource-types
   "Provides a list of all resource types"
   [_ request db]
-  (u/require-internal-user request)
+  (u/require-realms #{"services" "employees"} request)
   (log/debug "Read all resource types...")
   (->> (sql/cmd-read-resource-types {} {:connection db})
        (map strip-prefix)
@@ -71,7 +71,7 @@
 (defn read-resource-type
   "Reads detailed information about ine resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-internal-user request)
+  (u/require-realms #{"services" "employees"} request)
   (log/debug "Read resource type '%s'..." resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (content-type-json (response resource-type))
@@ -137,7 +137,7 @@
 (defn read-scopes
   "Reads the scopes of one resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-internal-user request)
+  (u/require-realms #{"services" "employees"} request)
   (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
   (->> (sql/cmd-read-scopes {:resource_type_id resource_type_id} {:connection db})
        (map strip-prefix)
@@ -147,7 +147,7 @@
 (defn read-scope
   "Read one scope from database"
   [{:keys [resource_type_id scope_id]} request db]
-  (u/require-internal-user request)
+  (u/require-realms #{"services" "employees"} request)
   (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
   (->> (sql/cmd-read-scope {:resource_type_id resource_type_id
                             :scope_id         scope_id} {:connection db})
