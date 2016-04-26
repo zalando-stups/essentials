@@ -32,7 +32,7 @@
   {:http-port 8080})
 
 (defn get-access-token [request]
-  (get-in request [:tokeninfo "access_token"] nil))
+  (get-in request [:tokeninfo "access_token"]))
 
 (defn require-special-uid
   "Checks wether a given user is configured to be allowed to access this endpoint. Workaround for now."
