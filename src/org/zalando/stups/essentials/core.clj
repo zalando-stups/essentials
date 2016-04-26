@@ -24,7 +24,7 @@
   "Initializes and starts the whole system."
   [default-configuration]
   (let [configuration (config/load-configuration
-                        (system/default-http-namespaces-and :db :essentials :oauth2)
+                        (system/default-http-namespaces-and :db :essentials)
                         [sql/default-db-configuration
                          api/default-http-configuration
                          default-configuration])
