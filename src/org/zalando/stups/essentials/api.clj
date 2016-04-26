@@ -84,7 +84,9 @@
 (defn read-resource-types
   "Provides a list of all resource types"
   [_ request db]
-  (u/require-realms #{"services" "employees"} request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read all resource types...")
   (->> (sql/cmd-read-resource-types {} {:connection db})
        (map strip-prefix)
@@ -94,7 +96,9 @@
 (defn read-resource-type
   "Reads detailed information about ine resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-realms #{"services" "employees"} request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read resource type '%s'..." resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (content-type-json (response resource-type))
@@ -130,8 +134,10 @@
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
   [{:keys [resource_type_id resource_type]} request db]
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Saving resource type '%s'..." resource_type_id)
-  (require-write-access resource_type_id request)
   (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
   (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
@@ -145,7 +151,9 @@
 (defn delete-resource-type
   "Deletes a resource type from the database"
   [{:keys [resource_type_id]} request db]
-  (require-write-access resource_type_id request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
   (let [deleted (pos? (sql/cmd-delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
     (if deleted
@@ -156,7 +164,9 @@
 (defn read-scopes
   "Reads the scopes of one resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-realms #{"services" "employees"} request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
   (->> (sql/cmd-read-scopes {:resource_type_id resource_type_id} {:connection db})
        (map strip-prefix)
@@ -166,7 +176,9 @@
 (defn read-scope
   "Read one scope from database"
   [{:keys [resource_type_id scope_id]} request db]
-  (u/require-realms #{"services" "employees"} request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
   (->> (sql/cmd-read-scope {:resource_type_id resource_type_id
                             :scope_id         scope_id} {:connection db})
@@ -177,7 +189,9 @@
 (defn create-or-update-scope
   "Creates or updates a scope"
   [{:keys [resource_type_id scope_id scope]} request db]
-  (require-write-access resource_type_id request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (do (when (and (:is_resource_owner_scope scope)
@@ -202,7 +216,9 @@
 (defn delete-scope
   "Deletes a scope"
   [{:keys [resource_type_id scope_id]} request db]
-  (require-write-access resource_type_id request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if (load-resource-type resource_type_id db)
     (do (sql/cmd-delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
