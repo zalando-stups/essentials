@@ -26,10 +26,13 @@
             [clojure.set :as set]))
 
 ; define the API component and its dependencies
-(def-http-component API "api/essentials-api.yaml" [db tokens])
+(def-http-component API "api/essentials-api.yaml" [db])
 
 (def default-http-configuration
   {:http-port 8080})
+
+(defn get-access-token [request]
+  (get-in request [:tokeninfo "access_token"] nil))
 
 (defn require-special-uid
   "Checks wether a given user is configured to be allowed to access this endpoint. Workaround for now."
@@ -41,11 +44,11 @@
 
 (defn require-write-access
   "Check whether the given resource type id starts with an application id belonging to a team of the user."
-  [id {:keys [configuration] :as request} tokens]
+  [id {:keys [configuration] :as request}]
   (if-let [app-id (second (re-find #"^([a-z][a-z\-]+[a-z])(:?\..+)?" id))]
     (do
       ; ask kio
-      (if-let [app (kio/get-app (require-config configuration :kio-url) app-id tokens)]
+      (if-let [app (kio/get-app (require-config configuration :kio-url) app-id (get-access-token request))]
         ; if kio *does* know, verify that teams match
         (u/require-internal-team (:team_id app) request)
         ; if kio does not know this app, fall back to special uids
@@ -56,7 +59,7 @@
       ; should actually never be called due to the required pattern in the swagger definition
       (do
         (log/warn "ACCESS DENIED could not extract application id from \"%s\"." id)
-        (throw-error 404 "Bad request"))))
+        (throw-error 400 "Bad request"))))
 
 (defn- strip-prefix
   "Removes the database field prefix."
@@ -80,7 +83,7 @@
 
 (defn read-resource-types
   "Provides a list of all resource types"
-  [_ request db _]
+  [_ request db]
   (u/require-realms #{"services" "employees"} request)
   (log/debug "Read all resource types...")
   (->> (sql/cmd-read-resource-types {} {:connection db})
@@ -90,7 +93,7 @@
 
 (defn read-resource-type
   "Reads detailed information about ine resource type from database"
-  [{:keys [resource_type_id]} request db _]
+  [{:keys [resource_type_id]} request db]
   (u/require-realms #{"services" "employees"} request)
   (log/debug "Read resource type '%s'..." resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
@@ -126,9 +129,9 @@
 
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
-  [{:keys [resource_type_id resource_type]} request db tokens]
+  [{:keys [resource_type_id resource_type]} request db]
   (log/debug "Saving resource type '%s'..." resource_type_id)
-  (require-write-access resource_type_id request tokens)
+  (require-write-access resource_type_id request)
   (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
   (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
@@ -141,8 +144,8 @@
 
 (defn delete-resource-type
   "Deletes a resource type from the database"
-  [{:keys [resource_type_id]} request db tokens]
-  (require-write-access resource_type_id request tokens)
+  [{:keys [resource_type_id]} request db]
+  (require-write-access resource_type_id request)
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
   (let [deleted (pos? (sql/cmd-delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
     (if deleted
@@ -152,7 +155,7 @@
 
 (defn read-scopes
   "Reads the scopes of one resource type from database"
-  [{:keys [resource_type_id]} request db _]
+  [{:keys [resource_type_id]} request db]
   (u/require-realms #{"services" "employees"} request)
   (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
   (->> (sql/cmd-read-scopes {:resource_type_id resource_type_id} {:connection db})
@@ -162,7 +165,7 @@
 
 (defn read-scope
   "Read one scope from database"
-  [{:keys [resource_type_id scope_id]} request db _]
+  [{:keys [resource_type_id scope_id]} request db]
   (u/require-realms #{"services" "employees"} request)
   (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
   (->> (sql/cmd-read-scope {:resource_type_id resource_type_id
@@ -173,8 +176,8 @@
 
 (defn create-or-update-scope
   "Creates or updates a scope"
-  [{:keys [resource_type_id scope_id scope]} request db tokens]
-  (require-write-access resource_type_id request tokens)
+  [{:keys [resource_type_id scope_id scope]} request db]
+  (require-write-access resource_type_id request)
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (do (when (and (:is_resource_owner_scope scope)
@@ -198,8 +201,8 @@
 
 (defn delete-scope
   "Deletes a scope"
-  [{:keys [resource_type_id scope_id]} request db tokens]
-  (require-write-access resource_type_id request tokens)
+  [{:keys [resource_type_id scope_id]} request db]
+  (require-write-access resource_type_id request)
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if (load-resource-type resource_type_id db)
     (do (sql/cmd-delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}

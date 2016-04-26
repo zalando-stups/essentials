@@ -1,20 +1,17 @@
 (ns org.zalando.stups.essentials.external.kio
   (:require [clj-http.client :as http]
-            [org.zalando.stups.friboo.log :as log]
-            [org.zalando.stups.friboo.system.oauth2 :as oauth]))
+            [slingshot.slingshot :refer [try+]]
+            [com.netflix.hystrix.core :as hystrix]))
 
-(defn- make-options
-  [tokens]
-  {:headers {:authorization (str "Bearer " (oauth/access-token :kio tokens))}
-   :accept :json
-   :as :json})
-
-(defn get-app
+(hystrix/defcommand get-app
   "Fetches application with this id from kio, returns nil if it does not exist"
-  [kio-url id tokens]
-  {:pre [(not (clojure.string/blank? id))]}
-  (let [options (make-options tokens)]
-    (try
-      (:body (http/get (str kio-url "/apps/" id) options))
-      (catch Exception _
-        nil))))
+  [kio-url id token]
+  {:pre [(not (clojure.string/blank? kio-url))
+         (not (clojure.string/blank? id))
+         (not (clojure.string/blank? token))]}
+  (try+
+    (:body (http/get (str kio-url "/apps/" id) {:oauth-token token
+                                                :accept :json
+                                                :as :json}))
+    (catch [:status 404] _
+      nil)))

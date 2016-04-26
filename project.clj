@@ -9,7 +9,6 @@
 
             :dependencies [[org.clojure/clojure "1.8.0"]
                            [org.zalando.stups/friboo "1.7.0"]
-                           [org.zalando.stups/tokens "0.9.9"]
                            [clj-http "2.1.0"]
                            [yesql "0.5.2"]]
 

@@ -16,7 +16,6 @@
   (:require [org.zalando.stups.friboo.config :as config]
             [org.zalando.stups.friboo.system :as system]
             [org.zalando.stups.friboo.log :as log]
-            [org.zalando.stups.friboo.system.oauth2 :as oauth2]
             [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.essentials.api :as api])
   (:gen-class))
@@ -30,9 +29,7 @@
                          api/default-http-configuration
                          default-configuration])
         system (system/http-system-map configuration
-                                       api/map->API [:db :tokens]
-                                       :tokens (oauth2/map->OAUth2TokenRefresher {:configuration (:oauth2 configuration)
-                                                                                  :tokens {:kio ["uid"]}})
+                                       api/map->API [:db]
                                        :db (sql/map->DB {:configuration (:db configuration)}))]
     (system/run configuration system)))
 
