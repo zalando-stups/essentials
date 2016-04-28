@@ -40,7 +40,8 @@ SELECT s_id,
        s_summary,
        s_description,
        s_user_information,
-       s_is_resource_owner_scope
+       s_is_resource_owner_scope,
+       s_criticality_level
   FROM ze_data.scope
  WHERE s_resource_type_id = :resource_type_id
  ORDER BY s_id ASC;
@@ -50,7 +51,8 @@ SELECT s_id,
        s_summary,
        s_description,
        s_user_information,
-       s_is_resource_owner_scope
+       s_is_resource_owner_scope,
+       s_criticality_level
   FROM ze_data.scope
  WHERE s_resource_type_id = :resource_type_id
    AND s_id = :scope_id;
@@ -61,7 +63,8 @@ WITH scope_update AS (
         SET s_summary = :summary,
             s_description = :description,
             s_user_information = :user_information,
-            s_is_resource_owner_scope = :is_resource_owner_scope
+            s_is_resource_owner_scope = :is_resource_owner_scope,
+            s_criticality_level = :criticality_level
       WHERE s_resource_type_id = :resource_type_id
         AND s_id = :scope_id
   RETURNING *
@@ -72,13 +75,15 @@ INSERT INTO ze_data.scope (
             s_summary,
             s_is_resource_owner_scope,
             s_description,
-            s_user_information)
+            s_user_information,
+            s_criticality_level)
      SELECT :scope_id,
             :resource_type_id,
             :summary,
             :is_resource_owner_scope,
             :description,
-            :user_information
+            :user_information,
+            :criticality_level
       WHERE NOT EXISTS(SELECT 1 FROM scope_update);
 
 -- name: delete-scope!
