@@ -19,6 +19,7 @@
             [org.zalando.stups.friboo.user :as u]
             [org.zalando.stups.friboo.config :refer [require-config]]
             [org.zalando.stups.essentials.sql :as sql]
+            [org.zalando.stups.essentials.external.kio :as kio]
             [io.sarnowski.swagger1st.util.api :refer [throw-error]]
             [ring.util.response :refer :all]
             [clojure.string :as str]
@@ -30,6 +31,9 @@
 (def default-http-configuration
   {:http-port 8080})
 
+(defn get-access-token [request]
+  (get-in request [:tokeninfo "access_token"]))
+
 (defn require-special-uid
   "Checks wether a given user is configured to be allowed to access this endpoint. Workaround for now."
   [{:keys [configuration tokeninfo]}]
@@ -37,6 +41,25 @@
     (when-not (contains? uids (get tokeninfo "uid"))
       (log/warn "ACCESS DENIED (unauthorized) because not a special user.")
       (throw-error 403 "Unauthorized"))))
+
+(defn require-write-access
+  "Check whether the given resource type id starts with an application id belonging to a team of the user."
+  [id {:keys [configuration] :as request}]
+  (if-let [app-id (second (re-find #"^([a-z][a-z\-]+[a-z])(:?\..+)?" id))]
+    (do
+      ; ask kio
+      (if-let [app (kio/get-app (require-config configuration :kio-url) app-id (get-access-token request))]
+        ; if kio *does* know, verify that teams match
+        (u/require-internal-team (:team_id app) request)
+        ; if kio does not know this app, fall back to special uids
+        (do
+          (log/debug "Failed to fetch application %s, falling back to special UIDs" app-id)
+          (require-special-uid request))))
+      ; do not proceed if what we have does not remotely look like an app id
+      ; should actually never be called due to the required pattern in the swagger definition
+      (do
+        (log/warn "ACCESS DENIED could not extract application id from \"%s\"." id)
+        (throw-error 400 "Bad request"))))
 
 (defn- strip-prefix
   "Removes the database field prefix."
@@ -61,7 +84,9 @@
 (defn read-resource-types
   "Provides a list of all resource types"
   [_ request db]
-  (u/require-internal-user request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read all resource types...")
   (->> (sql/cmd-read-resource-types {} {:connection db})
        (map strip-prefix)
@@ -71,7 +96,9 @@
 (defn read-resource-type
   "Reads detailed information about ine resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-internal-user request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read resource type '%s'..." resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (content-type-json (response resource-type))
@@ -107,11 +134,10 @@
 (defn create-or-update-resource-type
   "Creates or updates a resource type"
   [{:keys [resource_type_id resource_type]} request db]
-  (log/debug "Saving resource type '%s'..." resource_type_id)
   (if (:tokeninfo request)
-    (do (require-special-uid request)
-        (u/require-any-internal-team request))
-    (log/warn "Could not validate resouce type, due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
+  (log/debug "Saving resource type '%s'..." resource_type_id)
   (validate-resource-owners (:resource_owners resource_type) resource_type_id db request)
   (sql/cmd-create-or-update-resource-type!
     {:resource_type_id resource_type_id
@@ -125,8 +151,9 @@
 (defn delete-resource-type
   "Deletes a resource type from the database"
   [{:keys [resource_type_id]} request db]
-  (require-special-uid request)
-  (u/require-any-internal-team request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Deleting resource type '%s' ..." resource_type_id)
   (let [deleted (pos? (sql/cmd-delete-resource-type! {:resource_type_id resource_type_id} {:connection db}))]
     (if deleted
@@ -137,7 +164,9 @@
 (defn read-scopes
   "Reads the scopes of one resource type from database"
   [{:keys [resource_type_id]} request db]
-  (u/require-internal-user request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read scopes of resource type '%s' ..." resource_type_id)
   (->> (sql/cmd-read-scopes {:resource_type_id resource_type_id} {:connection db})
        (map strip-prefix)
@@ -147,7 +176,9 @@
 (defn read-scope
   "Read one scope from database"
   [{:keys [resource_type_id scope_id]} request db]
-  (u/require-internal-user request)
+  (if (:tokeninfo request)
+    (u/require-realms #{"services" "employees"} request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Read scope '%s' of resource type '%s' ..." scope_id resource_type_id)
   (->> (sql/cmd-read-scope {:resource_type_id resource_type_id
                             :scope_id         scope_id} {:connection db})
@@ -158,8 +189,9 @@
 (defn create-or-update-scope
   "Creates or updates a scope"
   [{:keys [resource_type_id scope_id scope]} request db]
-  (require-special-uid request)
-  (u/require-any-internal-team request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Saving scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if-let [resource-type (load-resource-type resource_type_id db)]
     (do (when (and (:is_resource_owner_scope scope)
@@ -187,8 +219,9 @@
 (defn delete-scope
   "Deletes a scope"
   [{:keys [resource_type_id scope_id]} request db]
-  (require-special-uid request)
-  (u/require-any-internal-team request)
+  (if (:tokeninfo request)
+    (require-write-access resource_type_id request)
+    (log/warn "Could not validate authorization due to missing tokeninfo. Set HTTP_TOKENINFO_URL to enable full validation"))
   (log/debug "Deleting scope '%s' of resource type '%s'..." scope_id resource_type_id)
   (if (load-resource-type resource_type_id db)
     (do (sql/cmd-delete-scope! {:resource_type_id resource_type_id :scope_id scope_id}
