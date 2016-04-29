@@ -199,8 +199,12 @@
           (throw-error
             400
             "A resource-owner-scope requires its resource type to have at least one resource owner"
-            {:resource_type_id resource_type_id :scope_id scope_id}))
-        (let [defaults {:criticality_level 2}
+            {:resource_type_id resource_type_id
+             :scope_id scope_id}))
+        (let [defaults {:criticality_level 2
+                        :description       nil
+                        :user_information  nil
+                        :summary           nil}
               scope-keys (select-keys scope [:summary
                                              :description
                                              :user_information
