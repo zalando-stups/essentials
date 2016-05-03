@@ -186,6 +186,11 @@
        (single-response)
        (content-type-json)))
 
+(defn prepare-scope-data
+  "prepares data to be passed to sql"
+  [{:keys [defaults scope-keys scope-ids]}]
+  (merge-with #(or %2 %1) defaults scope-keys scope-ids))
+
 (defn create-or-update-scope
   "Creates or updates a scope"
   [{:keys [resource_type_id scope_id scope]} request db]
@@ -213,8 +218,15 @@
               scope-ids {:resource_type_id resource_type_id
                          :scope_id         scope_id}]
         (sql/cmd-create-or-update-scope!
-          (merge-with #(or %2 %1) defaults scope-keys scope-ids)
-          {:connection db}))
+          (prepare-scope-data {:defaults {:criticality_level 2}
+                               :scope-keys (select-keys scope [:summary
+                                                               :description
+                                                               :user_information
+                                                               :is_resource_owner_scope
+                                                               :criticality_level])
+                               :scope-ids {:resource_type_id resource_type_id
+                                           :scope_id         scope_id}})
+          {:connection db})
         (log/info "Saved scope '%s' of resource type '%s' with %s" scope_id resource_type_id scope)
         (response nil))
     (do (log/debug "Resource type '%s' not found" resource_type_id)

@@ -16,7 +16,8 @@
             :uberjar-name "essentials.jar"
 
             :plugins [[io.sarnowski/lein-docker "1.1.0"]
-                      [org.zalando.stups/lein-scm-source "0.2.0"]]
+                      [org.zalando.stups/lein-scm-source "0.2.0"]
+                      [lein-midje "3.1.3"]]
 
             :docker {:image-name #=(eval (str (some-> (System/getenv "DEFAULT_DOCKER_REGISTRY")
                                                       (str "/"))
@@ -40,4 +41,5 @@
                        :dev     {:repl-options {:init-ns user}
                                  :source-paths ["dev"]
                                  :dependencies [[org.clojure/tools.namespace "0.2.11"]
-                                                [org.clojure/java.classpath "0.2.3"]]}})
+                                                [org.clojure/java.classpath "0.2.3"]
+                                                [midje "1.8.3"]]}})
