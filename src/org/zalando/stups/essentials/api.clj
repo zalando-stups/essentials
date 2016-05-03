@@ -206,19 +206,11 @@
             "A resource-owner-scope requires its resource type to have at least one resource owner"
             {:resource_type_id resource_type_id
              :scope_id scope_id}))
-        (let [defaults {:criticality_level 2
-                        :description       nil
-                        :user_information  nil
-                        :summary           nil}
-              scope-keys (select-keys scope [:summary
-                                             :description
-                                             :user_information
-                                             :is_resource_owner_scope
-                                             :criticality_level])
-              scope-ids {:resource_type_id resource_type_id
-                         :scope_id         scope_id}]
         (sql/cmd-create-or-update-scope!
-          (prepare-scope-data {:defaults {:criticality_level 2}
+          (prepare-scope-data {:defaults {:criticality_level  2
+                                          :description        nil
+                                          :user_information   nil
+                                          :summary            nil}
                                :scope-keys (select-keys scope [:summary
                                                                :description
                                                                :user_information
