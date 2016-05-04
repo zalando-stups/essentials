@@ -7,6 +7,21 @@
 
 
 (facts "about scope creation"
+
+       (fact "prepare-scope-data correctly prepares (merges) scope-data for create-or-update-scope!"
+             (api/prepare-scope-data ..scope-data..) => {..key1.. ..value1..
+                                                         ..key2.. nil
+                                                         ..key3.. ..value3..
+                                                         ..key4.. ..value4..
+                                                         ..key5.. ..value5..}
+             (provided
+               ..scope-data.. =contains=> {:defaults {..key1.. ..value1..
+                                                      ..key2.. nil
+                                                      ..key3.. nil}
+                                           :scope-keys {..key3.. ..value3..
+                                                        ..key4.. ..value4..}
+                                           :scope-ids {..key5.. ..value5..}}))
+
        (fact "create-or-update-scope creates a scope"
              (api/create-or-update-scope ..params.. ..request.. ..db..) => (contains {:status 200})
              (provided
