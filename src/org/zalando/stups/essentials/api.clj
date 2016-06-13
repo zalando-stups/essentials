@@ -17,6 +17,7 @@
             [org.zalando.stups.friboo.ring :refer :all]
             [org.zalando.stups.friboo.log :as log]
             [org.zalando.stups.friboo.user :as u]
+            [org.zalando.stups.friboo.auth :as auth]
             [org.zalando.stups.friboo.config :refer [require-config]]
             [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.essentials.external.kio :as kio]
