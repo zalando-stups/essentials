@@ -49,8 +49,8 @@
     (do
       ; ask kio
       (if-let [app (kio/get-app (require-config configuration :kio-url) app-id (get-access-token request))]
-        ; if kio *does* know, verify that teams match
-        (u/require-internal-team (:team_id app) request)
+        ; if kio *does* know, ask magnificent if it's ok
+        (auth/require-auth request (:team_id app))
         ; if kio does not know this app, fall back to special uids
         (do
           (log/debug "Failed to fetch application %s, falling back to special UIDs" app-id)
