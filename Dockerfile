@@ -1,10 +1,8 @@
-FROM registry.opensource.zalan.do/stups/openjdk:8-26
+FROM registry.opensource.zalan.do/stups/openjdk:8-29
 
 MAINTAINER Zalando SE
 
-EXPOSE 8080
-
-CMD java $JAVA_OPTS $(java-dynamic-memory-opts) $(newrelic-agent) $(appdynamics-agent) -jar /essentials.jar
+CMD java $JAVA_OPTS $(java-dynamic-memory-opts 70) $(newrelic-agent) $(appdynamics-agent) -jar /essentials.jar
 
 COPY target/essentials.jar /
 
