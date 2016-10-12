@@ -2,7 +2,7 @@ FROM registry.opensource.zalan.do/stups/openjdk:8-43
 
 MAINTAINER Zalando SE
 
-CMD java $JAVA_OPTS $(java-dynamic-memory-opts 70) $(newrelic-agent) $(appdynamics-agent) -jar /essentials.jar
+CMD java $JAVA_OPTS $(java-dynamic-memory-opts 50) $(newrelic-agent) $(appdynamics-agent) -jar /essentials.jar
 
 COPY target/essentials.jar /
 
