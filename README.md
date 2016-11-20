@@ -14,8 +14,9 @@ Variable                   | Mandatory? | Default                       | Descri
 DB_SUBNAME                 | yes        | `//localhost:5432/essentials` | JDBC connection information of your database.
 DB_USER                    | yes        | `postgres`                    | Database user.
 DB_PASSWORD                | yes        | `postgres`                    | Database password.
-HTTP_ALLOWED_UIDS          | yes        |                               | comma-separated list of user ids that have write access to this API
-HTTP_VALID_RESOURCE_OWNERS | yes        |                               | comma-separated list of resource owners, used for input validation
+HTTP_ALLOWED_UIDS          | yes        | `mjackson,dbowie`             | comma-separated list of user ids that have write access to this API
+HTTP_ALLOWED_REALMS        | yes        | `users,robots`                | comma-separated list of realms that have read access to this API
+HTTP_VALID_RESOURCE_OWNERS | yes        | `users,robots`                | comma-separated list of resource owners, used for input validation
 
 Example:
 

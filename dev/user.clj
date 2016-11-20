@@ -26,7 +26,8 @@
             [clojure.repl :refer [apropos dir doc find-doc pst source]]
             [clojure.tools.namespace.repl :refer [refresh refresh-all]]
             [com.stuartsierra.component :as component]
-            [org.zalando.stups.essentials.core]))
+            [org.zalando.stups.essentials.core]
+            [clojure.test :refer [run-all-tests]]))
 
 (def system
   "A Var containing an object representing the application under
@@ -59,3 +60,11 @@
   []
   (stop)
   (refresh :after 'user/go))
+
+(defn run-tests []
+  (run-all-tests #"org.zalando.stups.essentials.*-test"))
+
+(defn tests
+  "Stops the system, reloads modified source files and runs tests"
+  []
+  (refresh :after 'user/run-tests))
