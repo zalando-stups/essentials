@@ -1,7 +1,8 @@
 (ns org.zalando.stups.essentials.test-utils
   (:require [clojure.java.jdbc :as jdbc]
             [org.zalando.stups.friboo.system.db :as db]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component])
+  (:import (java.net ServerSocket)))
 
 (defn wipe-db
   [db]
@@ -23,3 +24,10 @@
        ~@body
        (finally
          (component/stop ~db)))))
+
+(defn get-free-port []
+  (let [sock (ServerSocket. 0)]
+    (try
+      (.getLocalPort sock)
+      (finally
+        (.close sock)))))

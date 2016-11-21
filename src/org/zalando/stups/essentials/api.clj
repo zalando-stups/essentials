@@ -84,7 +84,7 @@
 
 (defn require-realms [{:keys [configuration]} request]
   (if (:tokeninfo request)
-    (u/require-realms (parse-csv-set (:allowed-realms configuration "services,employees")) request)
+    (u/require-realms (parse-csv-set (require-config configuration :allowed-realms)) request)
     (log/warn "Could not validate authorization due to missing tokeninfo. Set TOKENINFO_URL to enable full validation")))
 
 (defn read-resource-types

@@ -29,13 +29,16 @@
   {:http-port 8080})
 
 (def default-db-config
-  {:db-classname    "org.postgresql.Driver"
-   :db-subprotocol  "postgresql"
-   :db-subname      "//localhost:5432/essentials"
-   :db-user         "postgres"
-   :db-password     "postgres"
-   :db-init-sql     "SET search_path TO ze_data, public"
+  {:db-classname       "org.postgresql.Driver"
+   :db-subprotocol     "postgresql"
+   :db-subname         "//localhost:5432/essentials"
+   :db-user            "postgres"
+   :db-password        "postgres"
+   :db-init-sql        "SET search_path TO ze_data, public"
    :db-auto-migration? true})
+
+(def default-controller-config
+  {:api-allowed-realms "services,employees"})
 
 (defn run
   "Initializes and starts the whole system."
@@ -44,8 +47,9 @@
   (let [config (config/load-config
                  (merge default-db-config
                         default-http-config
+                        default-controller-config
                         default-config)
-                 [:http :db :controller :metrics :mgmt-http])
+                 [:http :db :api :metrics :mgmt-http])
         system (component/map->SystemMap
                  {:http       (component/using
                                 (http/make-zalando-http
@@ -53,7 +57,7 @@
                                   (:http config)
                                   (-> config :global :tokeninfo-url))
                                 [:controller :metrics])
-                  :controller (component/using {} [:db :auth])
+                  :controller (component/using {:configuration (:api config)} [:db :auth])
                   :auth       (auth/map->Authorizer {:configuration (:auth config)})
                   :db         (db/map->DB {:configuration (:db config)})
                   :metrics    (metrics/map->Metrics {:configuration (:metrics config)})
