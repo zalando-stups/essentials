@@ -2,16 +2,24 @@
   (:require [midje.sweet :refer :all]
             [clojure.test :refer :all]
             [org.zalando.stups.essentials.core :refer :all]
-            [org.zalando.stups.friboo.test-utils :as u]
             [com.stuartsierra.component :as component]
-            [clj-http.client :as http]))
+            [clj-http.client :as http])
+  (:import (java.net ServerSocket)))
+
+
+(defn get-free-port []
+  (let [sock (ServerSocket. 0)]
+    (try
+      (.getLocalPort sock)
+      (finally
+        (.close sock)))))
 
 (deftest wrap-midje-facts
 
   (facts "about run"
-    (let [port (u/get-free-port)
+    (let [port (get-free-port)
           config {:http-port port
-                  :mgmt-http-port (u/get-free-port)
+                  :mgmt-http-port (get-free-port)
                   :db-subname "//localhost:5432/postgres"}
           system (run config)]
       (try
