@@ -22,7 +22,8 @@
             [org.zalando.stups.friboo.system.db :as db]
             [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.friboo.system.metrics :as metrics]
-            [org.zalando.stups.friboo.zalando-specific.auth :as auth])
+            [org.zalando.stups.friboo.zalando-specific.auth :as auth]
+            [org.zalando.stups.friboo.system.audit-log :as audit-log])
   (:gen-class))
 
 (def default-http-config
@@ -49,7 +50,7 @@
                         default-http-config
                         default-controller-config
                         default-config)
-                 [:http :db :api :metrics :mgmt-http])
+                 [:http :db :api :metrics :mgmt-http :auth :audit-log])
         system (component/map->SystemMap
                  {:http       (component/using
                                 (http/make-zalando-http
@@ -59,6 +60,7 @@
                                 [:controller :metrics])
                   :controller (component/using {:configuration (:api config)} [:db :auth])
                   :auth       (auth/map->Authorizer {:configuration (:auth config)})
+                  :audit-log  (audit-log/map->AuditLog {:configuration (:audit-log config)})
                   :db         (db/map->DB {:configuration (:db config)})
                   :metrics    (metrics/map->Metrics {:configuration (:metrics config)})
                   :mgmt-http  (component/using
