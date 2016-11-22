@@ -25,3 +25,8 @@ $ docker run -it \
     -e DB_PASSWORD=essentials123 \
     stups/essentials
 ```
+## Run Tests
+
+```
+lein midje
+```
