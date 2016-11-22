@@ -13,25 +13,60 @@
 ; limitations under the License.
 
 (ns org.zalando.stups.essentials.core
-  (:require [org.zalando.stups.friboo.config :as config]
+  (:require [com.stuartsierra.component :as component]
+            [org.zalando.stups.friboo.zalando-specific.config :as config]
             [org.zalando.stups.friboo.system :as system]
             [org.zalando.stups.friboo.log :as log]
+            [org.zalando.stups.friboo.zalando-specific.system.http :as http]
+            [org.zalando.stups.friboo.system.mgmt-http :as mgmt-http]
+            [org.zalando.stups.friboo.system.db :as db]
             [org.zalando.stups.essentials.sql :as sql]
-            [org.zalando.stups.essentials.api :as api])
+            [org.zalando.stups.friboo.system.metrics :as metrics]
+            [org.zalando.stups.friboo.zalando-specific.auth :as auth]
+            [org.zalando.stups.friboo.system.audit-log :as audit-log])
   (:gen-class))
+
+(def default-http-config
+  {:http-port 8080})
+
+(def default-db-config
+  {:db-classname       "org.postgresql.Driver"
+   :db-subprotocol     "postgresql"
+   :db-subname         "//localhost:5432/essentials"
+   :db-user            "postgres"
+   :db-password        "postgres"
+   :db-init-sql        "SET search_path TO ze_data, public"
+   :db-auto-migration? true})
+
+(def default-controller-config
+  {:api-allowed-realms "services,employees"})
 
 (defn run
   "Initializes and starts the whole system."
-  [default-configuration]
-  (let [configuration (config/load-configuration
-                        (system/default-http-namespaces-and :db :essentials)
-                        [sql/default-db-configuration
-                         api/default-http-configuration
-                         default-configuration])
-        system (system/http-system-map configuration
-                                       api/map->API [:db]
-                                       :db (sql/map->DB {:configuration (:db configuration)}))]
-    (system/run configuration system)))
+  [default-config]
+  true
+  (let [config (config/load-config
+                 (merge default-db-config
+                        default-http-config
+                        default-controller-config
+                        default-config)
+                 [:http :db :api :metrics :mgmt-http :auth :audit-log])
+        system (component/map->SystemMap
+                 {:http       (component/using
+                                (http/make-zalando-http
+                                  "api/essentials-api.yaml"
+                                  (:http config)
+                                  (-> config :global :tokeninfo-url))
+                                [:controller :metrics])
+                  :controller (component/using {:configuration (:api config)} [:db :auth])
+                  :auth       (auth/map->Authorizer {:configuration (:auth config)})
+                  :audit-log  (audit-log/map->AuditLog {:configuration (:audit-log config)})
+                  :db         (db/map->DB {:configuration (:db config)})
+                  :metrics    (metrics/map->Metrics {:configuration (:metrics config)})
+                  :mgmt-http  (component/using
+                                (mgmt-http/map->MgmtHTTP {:configuration (:mgmt-http config)})
+                                [:metrics])})]
+    (system/run config system)))
 
 (defn -main
   "The actual main for our uberjar."

@@ -14,17 +14,7 @@
 
 (ns org.zalando.stups.essentials.sql
   (:require [yesql.core :refer [defqueries]]
-            [org.zalando.stups.friboo.system.db :refer [def-db-component generate-hystrix-commands]]))
-
-(def-db-component DB :auto-migration? true)
-
-(def default-db-configuration
-  {:db-classname   "org.postgresql.Driver"
-   :db-subprotocol "postgresql"
-   :db-subname     "//localhost:5432/essentials"
-   :db-user        "postgres"
-   :db-password    "postgres"
-   :db-init-sql    "SET search_path TO ze_data, public"})
+            [org.zalando.stups.friboo.system.db :refer [generate-hystrix-commands]]))
 
 (defqueries "db/essentials.sql")
 (generate-hystrix-commands)

@@ -19,3 +19,5 @@ pom.xml.asc
 # IntelliJ IDEA
 /.idea
 *.iml
+
+dev-config.edn

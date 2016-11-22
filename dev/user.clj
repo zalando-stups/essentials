@@ -26,18 +26,36 @@
             [clojure.repl :refer [apropos dir doc find-doc pst source]]
             [clojure.tools.namespace.repl :refer [refresh refresh-all]]
             [com.stuartsierra.component :as component]
-            [org.zalando.stups.essentials.core]))
+            [org.zalando.stups.essentials.core]
+            [clojure.test :refer [run-all-tests]]
+            [org.zalando.stups.friboo.system :as system])
+  (:import (org.apache.logging.log4j LogManager)))
 
 (def system
   "A Var containing an object representing the application under
   development."
   nil)
 
+(defn slurp-if-exists [file]
+  (when (.exists (clojure.java.io/as-file file))
+    (slurp file)))
+
+(defn load-dev-config
+  ([]
+   (load-dev-config "./dev-config.edn"))
+  ([file]
+   (clojure.edn/read-string (slurp-if-exists file))))
+
+(defn reload-log4j2-config []
+  (.reconfigure (LogManager/getContext false)))
+
 (defn start
   "Starts the system running, sets the Var #'system."
-  [extra-config]
-  (alter-var-root #'system (constantly (org.zalando.stups.essentials.core/run (merge {:system-log-level "DEBUG"}
-                                                                                     extra-config)))))
+  [_]
+  (reload-log4j2-config)
+  (#'system/set-log-level! "DEBUG" :logger-name "org.zalando.stups.essentials")
+  (#'system/set-log-level! "DEBUG" :logger-name "org.zalando.stups")
+  (alter-var-root #'system (constantly (org.zalando.stups.essentials.core/run (load-dev-config)))))
 
 (defn stop
   "Stops the system if it is currently running, updates the Var
@@ -59,3 +77,11 @@
   []
   (stop)
   (refresh :after 'user/go))
+
+(defn run-tests []
+  (run-all-tests #"org.zalando.stups.essentials.*-test"))
+
+(defn tests
+  "Stops the system, reloads modified source files and runs tests"
+  []
+  (refresh :after 'user/run-tests))
