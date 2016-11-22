@@ -28,23 +28,14 @@
             [com.stuartsierra.component :as component]
             [org.zalando.stups.essentials.core]
             [clojure.test :refer [run-all-tests]]
-            [org.zalando.stups.friboo.system :as system])
+            [org.zalando.stups.friboo.system :as system]
+            [org.zalando.stups.essentials.utils :as u])
   (:import (org.apache.logging.log4j LogManager)))
 
 (def system
   "A Var containing an object representing the application under
   development."
   nil)
-
-(defn slurp-if-exists [file]
-  (when (.exists (clojure.java.io/as-file file))
-    (slurp file)))
-
-(defn load-dev-config
-  ([]
-   (load-dev-config "./dev-config.edn"))
-  ([file]
-   (clojure.edn/read-string (slurp-if-exists file))))
 
 (defn reload-log4j2-config []
   (.reconfigure (LogManager/getContext false)))
@@ -55,7 +46,7 @@
   (reload-log4j2-config)
   (#'system/set-log-level! "DEBUG" :logger-name "org.zalando.stups.essentials")
   (#'system/set-log-level! "DEBUG" :logger-name "org.zalando.stups")
-  (alter-var-root #'system (constantly (org.zalando.stups.essentials.core/run (load-dev-config)))))
+  (alter-var-root #'system (constantly (org.zalando.stups.essentials.core/run (u/load-dev-config)))))
 
 (defn stop
   "Stops the system if it is currently running, updates the Var
