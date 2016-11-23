@@ -4,7 +4,7 @@
             [org.zalando.stups.essentials.api :refer :all]
             [org.zalando.stups.essentials.test-utils :refer :all]
             [clj-http.client :as http]
-            [org.zalando.stups.friboo.zalando-specific.auth :as auth]
+            [org.zalando.stups.friboo.zalando-internal.auth :as auth]
             [org.zalando.stups.essentials.sql :as sql])
   (:import (clojure.lang ExceptionInfo)))
 

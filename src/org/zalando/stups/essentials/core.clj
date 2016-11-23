@@ -14,16 +14,15 @@
 
 (ns org.zalando.stups.essentials.core
   (:require [com.stuartsierra.component :as component]
-            [org.zalando.stups.friboo.zalando-specific.config :as config]
+            [org.zalando.stups.friboo.zalando-internal.config :as config]
             [org.zalando.stups.friboo.system :as system]
             [org.zalando.stups.friboo.log :as log]
-            [org.zalando.stups.friboo.zalando-specific.system.http :as http]
+            [org.zalando.stups.friboo.zalando-internal.system.http :as http]
             [org.zalando.stups.friboo.system.mgmt-http :as mgmt-http]
             [org.zalando.stups.friboo.system.db :as db]
-            [org.zalando.stups.essentials.sql :as sql]
             [org.zalando.stups.friboo.system.metrics :as metrics]
-            [org.zalando.stups.friboo.zalando-specific.auth :as auth]
-            [org.zalando.stups.friboo.system.audit-log :as audit-log])
+            [org.zalando.stups.friboo.zalando-internal.auth :as auth]
+            [org.zalando.stups.friboo.zalando-internal.system.audit-log :as audit-log])
   (:gen-class))
 
 (def default-http-config

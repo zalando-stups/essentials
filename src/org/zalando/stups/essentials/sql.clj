@@ -14,7 +14,8 @@
 
 (ns org.zalando.stups.essentials.sql
   (:require [yesql.core :refer [defqueries]]
-            [org.zalando.stups.friboo.system.db :refer [generate-hystrix-commands]]))
+            [org.zalando.stups.friboo.system.db :refer [generate-hystrix-commands]]
+            [org.zalando.stups.friboo.zalando-internal.system.db :refer [ignore-nonfatal-psqlexception]]))
 
 (defqueries "db/essentials.sql")
-(generate-hystrix-commands)
+(generate-hystrix-commands :ignore-exception-fn? ignore-nonfatal-psqlexception)
