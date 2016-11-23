@@ -5,10 +5,14 @@ jdk:
 addons:
   postgresql: "9.4"
 
-script: lein uberjar
+before_script:
+  - psql -c 'CREATE DATABASE essentials;' -U postgres
+
+script:
+  - lein uberjar
+  - CLOVERAGE_VERSION=1.0.9 lein cloverage --codecov
 
 after_success:
-  - CLOVERAGE_VERSION=1.0.9 lein cloverage --codecov
   - bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json
 
 notifications:
