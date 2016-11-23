@@ -3,7 +3,7 @@
             [org.zalando.stups.friboo.system.db :as db]
             [com.stuartsierra.component :as component]
             [org.zalando.stups.essentials.core :as core]
-            [org.zalando.stups.friboo.zalando-specific.config :as config]
+            [org.zalando.stups.friboo.zalando-internal.config :as config]
             [org.zalando.stups.essentials.utils :as u])
   (:import (java.net ServerSocket)))
 
