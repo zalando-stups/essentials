@@ -40,16 +40,28 @@
 (def default-controller-config
   {:api-allowed-realms "services,employees"})
 
+(defn config-true?
+  "Determine if a config element reflects truth in a boolean context."
+  [setting]
+  (some? (#{"true" "1" true 1} setting)))
+
+(defn load-config [defaults]
+  (let [config (config/load-config (merge default-db-config
+                                          default-http-config
+                                          default-controller-config
+                                          defaults)
+                                   [:http :db :api :metrics :mgmt-http :auth :audit-log])
+        migration-setting (some-> (get-in config [:db :auto-migration])
+                                  config-true?)]
+    (if (some? migration-setting)
+      (assoc-in config [:db :auto-migration?] migration-setting)
+      config)))
+
 (defn run
   "Initializes and starts the whole system."
   [default-config]
   true
-  (let [config (config/load-config
-                 (merge default-db-config
-                        default-http-config
-                        default-controller-config
-                        default-config)
-                 [:http :db :api :metrics :mgmt-http :auth :audit-log])
+  (let [config (load-config default-config)
         system (component/map->SystemMap
                  {:http       (component/using
                                 (http/make-zalando-http

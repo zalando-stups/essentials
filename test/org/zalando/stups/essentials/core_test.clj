@@ -26,4 +26,10 @@
         (finally
           (component/stop system)))))
 
-  )
+  (facts "about load-config"
+         (fact "not setting DB_AUTO_MIGRATION gives us the default"
+               (get-in (load-config {}) [:db :auto-migration?]) => (:db-auto-migration? default-db-config))
+         (fact "setting DB_AUTO_MIGRATION to 1 leaves automatic migration enabled"
+               (get-in (load-config {:db-auto-migration "1"}) [:db :auto-migration?]) => true)
+         (fact "setting DB_AUTO_MIGRATION to 0 disables automatic migration"
+               (get-in (load-config {:db-auto-migration "0"}) [:db :auto-migration?]) => false)))
