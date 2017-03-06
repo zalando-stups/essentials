@@ -6,7 +6,7 @@ ESSENTIALS is the repository for resource types and OAuth 2.0 scopes in the STUP
 
 ## Configuration
 
-ESSENTIALS is based on [Friboo](https://github.com/zalando-stups/friboo) and accepts all of its configuration options.
+ESSENTIALS is based on [friboo-ext-zalando](https://github.com/zalando-incubator/friboo-ext-zalando) and accepts all of its configuration options.
 Additionally the following table lists all important config options for this application:
 
 Variable                   | Mandatory? | Default                       | Description
