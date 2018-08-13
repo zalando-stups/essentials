@@ -11,3 +11,4 @@ approvals:
   # This will probably become the default in zappr.
   ignore: none
 X-Zalando-Team: "foundation"
+X-Zalando-Type: code
